@@ -130,7 +130,10 @@ struct Settings {
 	//   3: both stick
 	int toggleWindowOperation = 0;
 
-	// window to toggle
+	// Send ALT+TAB to toggle windows
+	bool toggleWindowWithAltTab = false;
+
+	// title of windows to toggle
 	std::string toggleWindowTitlePrefix = "";
 
 	// toggles between two different toggle types
@@ -228,6 +231,37 @@ struct Tracker {
 } tracker;
 
 
+void sendAltTabKey() {
+	INPUT in[4] = { 0 };
+
+	in[0].type = INPUT_KEYBOARD;
+	in[0].ki.dwFlags = 0;
+	in[0].ki.wVk = VK_MENU;
+	in[0].ki.time = 0;
+	in[0].ki.dwExtraInfo = 0;
+
+	in[1].type = INPUT_KEYBOARD;
+	in[1].ki.dwFlags = 0;
+	in[1].ki.wVk = VK_TAB;
+	in[1].ki.time = 0;
+	in[1].ki.dwExtraInfo = 0;
+
+	in[2].type = INPUT_KEYBOARD;
+	in[2].ki.dwFlags = KEYEVENTF_KEYUP;
+	in[2].ki.wVk = VK_TAB;
+	in[2].ki.time = 0;
+	in[2].ki.dwExtraInfo = 0;
+
+	in[3].type = INPUT_KEYBOARD;
+	in[3].ki.dwFlags = KEYEVENTF_KEYUP;
+	in[3].ki.wVk = VK_MENU;
+	in[3].ki.time = 0;
+	in[3].ki.dwExtraInfo = 0;
+
+	::SendInput(sizeof(in) / sizeof(*in), in, sizeof(*in));
+}
+
+
 namespace {
 	HWND lastHwnd = NULL;
 }
@@ -267,6 +301,11 @@ BOOL CALLBACK enumWindowCallback(_In_ HWND hwnd, _In_ LPARAM lParam) {
 
 void doToggleWindow() {
 	printf("\nToggle window command pressed\n");
+	if (settings.toggleWindowWithAltTab) {
+		sendAltTabKey();
+	}
+
+
 	TargetWindows windows;
 	if (!::EnumWindows(enumWindowCallback, reinterpret_cast<LPARAM>(&windows))) {
 		printf("Failed to enumerate windows\n");
@@ -1042,6 +1081,7 @@ void parseSettings2() {
 
 	settings.gyroscopeComboCode = stoi(cfg["gyroscopeComboCode"]);
 	settings.toggleWindowOperation = stoi(cfg["toggleWindowOperation"]);
+	settings.toggleWindowWithAltTab = (bool)stoi(cfg["toggleWindowWithAltTab"]);
 	settings.toggleWindowTitlePrefix = cfg["toggleWindowTitlePrefix"];
 
 	settings.debugMode = (bool)stoi(cfg["debugMode"]);
