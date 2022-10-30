@@ -228,8 +228,76 @@ struct Tracker {
 } tracker;
 
 
+namespace {
+	HWND lastHwnd = NULL;
+}
+
+
+struct TargetWindow {
+	HWND hwnd;
+	bool active;
+};
+typedef std::vector<TargetWindow> TargetWindows;
+
+
+BOOL CALLBACK enumWindowCallback(_In_ HWND hwnd, _In_ LPARAM lParam) {
+	std::string title(256, '\0');
+	TargetWindows* pWindows = reinterpret_cast<TargetWindows*>(lParam);
+
+	const LONG style = ::GetWindowLong(hwnd, GWL_STYLE);
+	if ((style & WS_VISIBLE) == 0) {
+		return TRUE;
+	}
+
+	::GetWindowTextA(hwnd, &title[0], title.size());
+	if (title.compare(0, settings.toggleWindowTitlePrefix.size(), settings.toggleWindowTitlePrefix) != 0) {
+		return TRUE;
+	}
+	bool foreground = (hwnd == ::GetForegroundWindow());
+	printf("Found window: title=%s foreground=%d\n", title.c_str(), foreground);
+
+	TargetWindow window;
+	window.hwnd = hwnd;
+	window.active = foreground;
+	pWindows->push_back(window);
+
+	return TRUE;
+}
+
+
 void doToggleWindow() {
-	printf("Toggle window command pressed\n");
+	printf("\nToggle window command pressed\n");
+	TargetWindows windows;
+	if (!::EnumWindows(enumWindowCallback, reinterpret_cast<LPARAM>(&windows))) {
+		printf("Failed to enumerate windows\n");
+		return;
+	}
+	if (windows.size() == 0) {
+		printf("No window was found\n");
+		return;
+	}
+	TargetWindows::const_iterator activeIndex = windows.end();
+	for (TargetWindows::const_iterator it = windows.begin(); it != windows.end(); ++it) {
+		if (it->active) {
+			activeIndex = it;
+			break;
+		}
+		if (it->hwnd == lastHwnd && activeIndex == windows.end()) {
+			activeIndex = it;
+		}
+	}
+	if (activeIndex == windows.end()) {
+		printf("Could not determine current/last active one\n");
+		lastHwnd = windows.begin()->hwnd;
+	} else {
+		if (++activeIndex != windows.end()) {
+			lastHwnd = activeIndex->hwnd;
+		} else {
+			// get out of lists.
+			lastHwnd = windows.begin()->hwnd;
+		}
+	}
+	::SetForegroundWindow(lastHwnd);
 }
 
 
