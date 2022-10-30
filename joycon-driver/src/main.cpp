@@ -337,6 +337,8 @@ void doToggleWindow() {
 		}
 	}
 	::SetForegroundWindow(lastHwnd);
+	::ShowWindow(lastHwnd, SW_SHOW);
+	::SwitchToThisWindow(lastHwnd, TRUE);
 }
 
 
