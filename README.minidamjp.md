@@ -4,7 +4,9 @@ Notes for JoyCon-Driver
 How to build
 ------------
 
-* Buildable with Visual Studio Community 2017.
+* Buildable with Visual Studio Community 2022.
+    * You need install MSVC v141 and relates.
+    * You need install WindowsSDK 10.0.15063.x . It cannot install with Visual Studio Installer and install from https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/ .
 * Build on x86 / Releases
 * The version mismatch with wx may be claimed when running.
     Rebuild wxWidgets-3.0.3 in that case.
