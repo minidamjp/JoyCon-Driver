@@ -123,6 +123,16 @@ struct Settings {
 	// combo code to set key combination to disable gyroscope for quick turning in games. -1 to disable.
 	int gyroscopeComboCode = 4;
 
+	// toggle window when pressing sticks:
+	//   0: disable
+	//   1: left stick
+	//   2: right stick
+	//   3: both stick
+	int toggleWindowOperation = 0;
+
+	// window to toggle
+	std::string toggleWindowTitlePrefix = "";
+
 	// toggles between two different toggle types
 	// disabled = traditional toggle
 	// enabled = while button(s) are held gyro is enabled
@@ -218,6 +228,9 @@ struct Tracker {
 } tracker;
 
 
+void doToggleWindow() {
+	printf("Toggle window command pressed\n");
+}
 
 
 bool handle_input(Joycon *jc, uint8_t *packet, int len) {
@@ -884,6 +897,40 @@ void updatevJoyDevice2(Joycon *jc) {
 		//std::cout << num1 << " " << num2 << std::endl;
 	}
 
+	// check toggle mode
+	if (settings.toggleWindowOperation == 1 && jc->left_right == 1) {
+		if ((btns & (1 << 11)) != 0) {
+			// pressing
+			if (!jc->pressToggleWindow) {
+				jc->pressToggleWindow = true;
+				doToggleWindow();
+			}
+		} else {
+			jc->pressToggleWindow = false;
+		}
+	} else if (settings.toggleWindowOperation == 2 && jc->left_right == 2) {
+		if ((btns & ((1 << 10) << 16)) != 0) {
+			// pressing
+			if (!jc->pressToggleWindow) {
+				jc->pressToggleWindow = true;
+				doToggleWindow();
+			}
+		} else {
+			jc->pressToggleWindow = false;
+		}
+	} else if (settings.toggleWindowOperation == 3 && jc->left_right == 1) {
+		const long bits = (1 << 11) | ((1 << 10) << 16);
+		if ((btns & bits) == bits) {
+			// pressing
+			if (!jc->pressToggleWindow) {
+				jc->pressToggleWindow = true;
+				doToggleWindow();
+			}
+		} else {
+			jc->pressToggleWindow = false;
+		}
+	}
+
 	iReport.lButtons = btns;
 
 	// Send data to vJoy device
@@ -926,6 +973,8 @@ void parseSettings2() {
 	settings.dolphinPointerMode = (bool)stoi(cfg["dolphinPointerMode"]);
 
 	settings.gyroscopeComboCode = stoi(cfg["gyroscopeComboCode"]);
+	settings.toggleWindowOperation = stoi(cfg["toggleWindowOperation"]);
+	settings.toggleWindowTitlePrefix = cfg["toggleWindowTitlePrefix"];
 
 	settings.debugMode = (bool)stoi(cfg["debugMode"]);
 	settings.writeDebugToFile = (bool)stoi(cfg["writeDebugToFile"]);

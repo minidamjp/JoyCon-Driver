@@ -201,6 +201,7 @@ public:
 	uint8_t led;
 	bool enable_imu;
 	BodyAndButtonColors colors;
+	bool pressToggleWindow = false;
 
 
 public:
